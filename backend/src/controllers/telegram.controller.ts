@@ -3,6 +3,7 @@ import { Response } from "express";
 import { pool } from "../db";
 import { AuthRequest } from "../middlewares/auth.middleware";
 import { RecommendationPayload, sendMessageSplit } from "../bot";
+import { bot } from "../bot";
 
 /* ─── FORMAT MESSAGE ─────────────────────────────────────────────────── */
 function formatRecommendationMessage(data: RecommendationPayload): string {
@@ -114,8 +115,6 @@ chatIds = users.rows
 };
 
 /* ─── VERIFY & SAVE TELEGRAM USER ───────────────────────────── */
-
-import { bot } from "../bot";
 
 export const verifyTelegramUser = async (req: AuthRequest, res: Response) => {
   try {
