@@ -37,7 +37,7 @@ export const TelegramSearch = ({ onSaved }: TelegramSearchProps) => {
     alert("✅ Saved successfully");
     onSaved?.(telegramId);
   } catch (err: any) {
-    alert("❌ Invalid Telegram ID or user didn't start bot");
+    alert("❌ Invalid Phone number or user didn't start bot");
   }
 };
   return (
@@ -61,8 +61,8 @@ export const TelegramSearch = ({ onSaved }: TelegramSearchProps) => {
           <Box>
             <TextField
               fullWidth
-              label="Telegram ID"
-              placeholder="123456789"
+              label="Phone"
+              placeholder="0123456789"
               value={telegramId}
               onChange={(e) => setTelegramId(e.target.value)}
             />
