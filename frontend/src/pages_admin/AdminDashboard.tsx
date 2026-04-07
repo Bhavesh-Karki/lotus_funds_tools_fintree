@@ -399,9 +399,6 @@ const AdminDashboard = () => {
                       gap: 0.75,
                     }}
                   >
-                    <Typography variant="body2">
-                      {row.telegram || ""}
-                    </Typography>
                     <Button
                       size="small"
                       variant="outlined"
