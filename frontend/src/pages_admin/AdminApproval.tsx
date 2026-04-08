@@ -376,7 +376,7 @@ const handleApprove = async (id: string, type: "RA" | "BROKER") => {
                     variant="outlined"
                     onClick={() => setSelectedRA(row)}
                   >
-                    View
+                    View Details
                   </Button>
                 </TableCell>
 
@@ -410,6 +410,7 @@ const handleApprove = async (id: string, type: "RA" | "BROKER") => {
             width: 330,
             p: 2,
             borderRadius: 2,
+            zIndex: 1200,
           }}
         >
 
@@ -545,7 +546,7 @@ const handleApprove = async (id: string, type: "RA" | "BROKER") => {
 
       {/* ================= BROKER TABLE ================= */}
 <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 6 }}>
-  <Typography variant="h5" fontWeight={600} color="primary">
+  <Typography variant="h5" fontWeight={600}>
     Broker Approval
   </Typography>
 
