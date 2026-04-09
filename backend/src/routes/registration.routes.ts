@@ -7,11 +7,12 @@ import {
   registerRA,
   getAllRegistrations,
   approveRegistration,
-  rejectUser, 
+  rejectUser,
   getRegistrationById,
-   getBrokerById,
+  getBrokerById,
   updateRARegistration,
-   updateBroker 
+  updateBroker,
+  getAllRegistrationsActiveUsers
 } from "../controllers/registration.controller";
 
 const router = express.Router();
