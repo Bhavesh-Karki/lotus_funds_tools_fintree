@@ -67,8 +67,10 @@ const AdminApproval = () => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const [brokerRows, setBrokerRows] = useState<AdminRow[]>([]);
-const [brokerSearch, setBrokerSearch] = useState("");
-const [selectedBroker, setSelectedBroker] = useState<AdminRow | null>(null);
+  const [brokerSearch, setBrokerSearch] = useState("");
+  const [selectedBroker, setSelectedBroker] = useState<AdminRow | null>(null);
+  const [brokerFilter, setBrokerFilter] = useState<AdminFilterValue>("All");
+  const [brokerPage, setBrokerPage] = useState(1);
 
   const navigate = useNavigate();
 
@@ -575,6 +577,10 @@ const handleReject = async (id: string, type: "RA" | "BROKER") => {
       ),
     }}
   />
+
+  <Box sx={{ overflowX: "auto" }}>
+  <AdminFilter value={brokerFilter} onChange={setBrokerFilter} />
+</Box>
 
   <TableContainer component={Paper} variant="outlined">
     <Table size="small">
