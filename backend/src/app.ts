@@ -27,6 +27,7 @@ app.use(cors({
     }
   },
   credentials: true,
+  allowedHeaders: ["Content-Type", "Authorization"], // ✅ ADD THIS
 }));
 
 
@@ -47,7 +48,7 @@ app.use("/api/broker", brokerRoutes);
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 app.use("/api/registration", registrationRoutes);
 // app.use("/api", telegramRoutes);
-app.use("/api/telegram", telegramRoutes);
+
 //app.use("/api", telegramRoutes);
 app.use("/admin", adminRoutes);
 app.use("/api/telegram", telegramRoutes);
@@ -57,4 +58,8 @@ app.get("/api/health", (_req, res) => {
 });
 
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 28c1d0781ecdc61d3cc2769f9a9256f487f21196
 export default app;

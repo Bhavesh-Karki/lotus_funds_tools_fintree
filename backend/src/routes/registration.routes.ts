@@ -7,11 +7,11 @@ import {
   registerRA,
   getAllRegistrations,
   approveRegistration,
-  rejectUser, 
+  rejectUser,
   getRegistrationById,
-   getBrokerById,
+  getBrokerById,
   updateRARegistration,
-  getAllRegistrationsActiveUsers,
+  //getAllRegistrationsActiveUsers,
    updateBroker 
 } from "../controllers/registration.controller";
 
@@ -73,7 +73,7 @@ router.put(
 /* ================= ADMIN APIs ================= */
 
 router.get("/all-registrations", getAllRegistrations);
-router.get("/all-registrations-active-users", getAllRegistrationsActiveUsers);
+//router.get("/all-registrations-active-users", getAllRegistrationsActiveUsers);
 
 router.put("/approve/:id", approveRegistration);
 
