@@ -138,12 +138,15 @@ const handleSave = async () => {
     if (files.addressProofDoc) form.append("addressProofDoc", files.addressProofDoc);
 
     // ✅ API call
+  const token = localStorage.getItem("token");
+
     const response = await axios.post(
       `${API_URL}/api/registration/register-ra`,
       form,
       {
         headers: {
           "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`, // ⭐ ADD THIS
         },
       }
     );

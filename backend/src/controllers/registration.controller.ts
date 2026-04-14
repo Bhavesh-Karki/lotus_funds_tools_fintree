@@ -4,6 +4,7 @@ import { pool } from "../db";
 
 import bcrypt from "bcrypt";
 import crypto from "crypto";
+import { v4 as uuidv4 } from "uuid";
 
 /* ================= GET ALL REGISTRATIONS ================= */
 
@@ -92,11 +93,16 @@ ORDER BY u.created_at DESC;
   }
 };
 /* ================= REGISTER RA ================= */
+
+/* ================= REGISTER RA (FIXED) ================= */
+
 export const registerRA = async (req: AuthRequest, res: Response) => {
   try {
     const data = req.body || {};
+    const files = req.files as any;
 
-    // ✅ VALIDATIONS
+    const userId = req.user?.id || crypto.randomUUID(); // fallback ID
+
     if (!data.firstName || !data.surname) {
       return res.status(400).json({
         success: false,
@@ -111,68 +117,34 @@ export const registerRA = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    // ✅ Clean email
-    data.email = data.email.trim();
+    data.email = data.email.trim().toLowerCase();
 
-    const existingUser = await pool.query(
-  `SELECT id FROM users WHERE email = $1`,
-  [data.email]
-);
-
-if (existingUser.rows.length > 0) {
-  return res.status(400).json({
-    success: false,
-    message: "Email already registered. Please login instead.",
-  });
-}
-
-    if (!data.email.includes("@")) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(data.email)) {
       return res.status(400).json({
         success: false,
         message: "Invalid email format",
       });
     }
 
-    // ✅ Build name
-    const fullName = `${data.firstName} ${data.surname}`;
-
-    // ✅ Generate credentials
-    const username = `ra_${Math.random().toString(36).substring(2, 8)}`;
-    const rawPassword = crypto.randomBytes(4).toString("hex");
-    const hashedPassword = await bcrypt.hash(rawPassword, 10);
-
-    // ✅ CREATE USER (🔥 FIXED: email added)
-    const userRes = await pool.query(
-      `INSERT INTO users (name, email, username, password_hash, role, status)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING id`,
-      [
-        fullName,
-        data.email, // ✅ REQUIRED FIX
-        username,
-        hashedPassword,
-        "RESEARCH_ANALYST",
-        "PENDING",
-      ]
+    const existing = await pool.query(
+      `SELECT id FROM ra_details WHERE email = $1`,
+      [data.email]
     );
 
-    const userId = userRes.rows[0].id;
+    if ((existing.rowCount ?? 0) > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "RA already registered with this email",
+      });
+    }
 
-    const files = (req.files as any) || {};
+    const toBool = (val: any) => val === "true";
 
-    // ✅ Boolean conversions
-    data.noGuaranteedReturns = data.noGuaranteedReturns === "true";
-    data.conflictOfInterest = data.conflictOfInterest === "true";
-    data.personalTrading = data.personalTrading === "true";
-    data.sebiCompliance = data.sebiCompliance === "true";
-    data.platformPolicy = data.platformPolicy === "true";
-    data.declare1 = data.declare1 === "true";
-    data.declare2 = data.declare2 === "true";
-
-    // ✅ INSERT RA DETAILS
     const result = await pool.query(
       `INSERT INTO ra_details (
-        user_id, salutation, first_name, middle_name, surname,
+        user_id,
+        salutation, first_name, middle_name, surname,
         org_name, designation, short_bio, email, mobile, telephone,
         country, state, city, pincode, address_line1, address_line2,
         profile_image,
@@ -190,18 +162,21 @@ if (existingUser.rows.length > 0) {
         personal_trading, sebi_compliance, platform_policy
       )
       VALUES (
-        $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,
+        $1,
+        $2,$3,$4,$5,$6,$7,$8,$9,$10,$11,
         $12,$13,$14,$15,$16,$17,$18,
         $19,$20,$21,$22,$23,
         $24,$25,$26,
         $27,$28,$29,$30,$31,
         $32,$33,$34,$35,$36,
         $37,$38,$39,$40,
-        $41,$42,$43,$44,$45,$46,$47
+        $41,$42,
+        $43,$44,$45,$46,$47
       )
       RETURNING id`,
       [
-        userId,
+        userId, // ✅ FIXED
+
         data.salutation || null,
         data.firstName,
         data.middleName || null,
@@ -219,18 +194,17 @@ if (existingUser.rows.length > 0) {
         data.address1 || null,
         data.address2 || null,
 
-        files?.profile_image?.[0]?.filename || null,
-
+        files?.profileImage?.[0]?.filename || null,
         data.sebiRegNo || null,
         data.sebiStartDate || null,
         data.sebiExpiryDate || null,
 
-        files?.sebi_certificate?.[0]?.filename || null,
-        files?.sebi_receipt?.[0]?.filename || null,
+        files?.sebiCert?.[0]?.filename || null,
+        files?.sebiReceipt?.[0]?.filename || null,
 
         data.nismRegNo || null,
         data.nismValidTill || null,
-        files?.nism_certificate?.[0]?.filename || null,
+        files?.nismCert?.[0]?.filename || null,
 
         data.academicQual || null,
         data.profQual || null,
@@ -243,47 +217,39 @@ if (existingUser.rows.length > 0) {
         data.accountNumber || null,
         data.ifscCode || null,
 
-        files?.cancelled_cheque?.[0]?.filename || null,
-
+        files?.cancelledCheque?.[0]?.filename || null,
         data.panNumber || null,
-        files?.pan_card?.[0]?.filename || null,
-
+        files?.panCard?.[0]?.filename || null,
         data.addressProofType || null,
-        files?.address_proof_document?.[0]?.filename || null,
+        files?.addressProofDoc?.[0]?.filename || null,
 
-        data.declare1,
-        data.declare2,
-        data.noGuaranteedReturns,
-        data.conflictOfInterest,
-        data.personalTrading,
-        data.sebiCompliance,
-        data.platformPolicy
+        toBool(data.declare1),
+        toBool(data.declare2),
+        toBool(data.noGuaranteedReturns),
+        toBool(data.conflictOfInterest),
+        toBool(data.personalTrading),
+        toBool(data.sebiCompliance),
+        toBool(data.platformPolicy),
       ]
     );
 
-    // ✅ SUCCESS RESPONSE
     return res.status(201).json({
       success: true,
-      message: "RA Registered Successfully",
+      message: "RA Registration Submitted Successfully",
       ra_id: result.rows[0].id,
-      username,
-      password: rawPassword,
     });
 
-  } catch (error: any) {
+  } catch (error) {
     console.error("RA Registration Error:", error);
 
     return res.status(500).json({
       success: false,
-      message: error.message, // ✅ show real error
+      message: "Server error",
     });
   }
 };
 
-
 /* ================= APPROVE REGISTRATION ================= */
-
-
 
 export const approveRegistration = async (req: Request, res: Response) => {
   const client = await pool.connect();

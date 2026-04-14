@@ -58,8 +58,4 @@ app.get("/api/health", (_req, res) => {
 });
 
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 28c1d0781ecdc61d3cc2769f9a9256f487f21196
 export default app;
