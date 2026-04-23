@@ -15,7 +15,10 @@ import {
   updateBroker,
 } from "../controllers/registration.controller";
 
+
 const router = express.Router();
+
+console.log("🔥 registration.routes.ts LOADED");
 
 router.use((req, res, next) => {
   console.log("📍 REG ROUTER HIT:", req.method, req.url);
@@ -101,6 +104,10 @@ router.get("/broker/:id", authenticate, requireAdmin, getBrokerById);
 
 router.get("/test", (req: Request, res: Response) => {
   res.send("Registration route working");
+});
+
+router.get("/ping", (req, res) => {
+  res.json({ message: "RA ROUTES WORKING" });
 });
 
 export default router;
