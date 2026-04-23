@@ -413,13 +413,18 @@ setParticipantUsername("");
       <span
         style={{ display: "block", minHeight: "20px", cursor: "pointer" }}
         onClick={(e) => {
-          e.stopPropagation();
-          setEditingCell({
-  id: String(p.id), // ✅ FIX
-  field,
-  value: value || "",
-});
-        }}
+  e.stopPropagation();
+
+  // ✅ SET SELECTED PARTICIPANT
+  setParticipant(p);
+
+  // ✅ START EDITING
+  setEditingCell({
+    id: String(p.id),
+    field,
+    value: value || "",
+  });
+}}
       >
         {value || "N/A"}
       </span>
@@ -723,24 +728,36 @@ setParticipantUsername("");
                 {/* Update / Delete Buttons */}
                 <Box sx={{ display: "flex", gap: 2, mt: 3 }}>
                   <Button
-                    variant="contained"
-                    color="primary"
-                    fullWidth
-                    disabled={!participant || participantLoading}
-                    onClick={handleUpdateParticipant}
-                  >
-                    Update
-                  </Button>
+  variant="contained"
+  fullWidth
+  disabled={!participant || participantLoading}
+  onClick={handleUpdateParticipant}
+  sx={{
+    backgroundColor: participant ? "#1976d2" : "#e0e0e0",
+    color: participant ? "#fff" : "#9e9e9e",
+    "&:hover": {
+      backgroundColor: participant ? "#1565c0" : "#e0e0e0",
+    },
+  }}
+>
+  Update
+</Button>
 
                   <Button
-                    variant="contained"
-                    color="error"
-                    fullWidth
-                    disabled={!participant || participantLoading}
-                    onClick={handleDeleteParticipant}
-                  >
-                    Delete
-                  </Button>
+  variant="contained"
+  fullWidth
+  disabled={!participant || participantLoading}
+  onClick={handleDeleteParticipant}
+  sx={{
+    backgroundColor: participant ? "#d32f2f" : "#e0e0e0",
+    color: participant ? "#fff" : "#9e9e9e",
+    "&:hover": {
+      backgroundColor: participant ? "#b71c1c" : "#e0e0e0",
+    },
+  }}
+>
+  Delete
+</Button>
                 </Box>
               </Box>
             </>

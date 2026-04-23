@@ -49,17 +49,35 @@ export const getAllUsers = async (req: Request, res: Response) => {
 
 export const saveTelegramUser = async (req: AuthRequest, res: Response) => {
   try {
-    const { telegram_user_id, telegram_client_name, phone_number } = req.body;
-const user_id = req.user!.id; // ✅ ALWAYS from token
+    const {
+      telegram_user_id,
+      telegram_client_name,
+      phone_number,
+      user_id, // ✅ RA ID from frontend
+    } = req.body;
 
-    // ✅ 1. Validation
+    // ✅ 1. Validate RA ID presence
     if (!user_id) {
       return res.status(400).json({
         success: false,
-        message: "user_id (RA ID) is required",
+        message: "RA ID (user_id) is required",
       });
     }
 
+    // ✅ 2. Ensure RA exists (prevents FK error)
+    const userCheck = await pool.query(
+      `SELECT id FROM users WHERE id = $1`,
+      [user_id]
+    );
+
+    if (userCheck.rows.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid RA ID (not found in users table)",
+      });
+    }
+
+    // ✅ 3. At least one field required
     if (!telegram_user_id && !telegram_client_name && !phone_number) {
       return res.status(400).json({
         success: false,
@@ -67,7 +85,7 @@ const user_id = req.user!.id; // ✅ ALWAYS from token
       });
     }
 
-    // ✅ 2. Fetch RA Telegram session
+    // ✅ 4. Get RA Telegram session (optional)
     const sessionResult = await pool.query(
       `SELECT telegram_session FROM users WHERE id = $1`,
       [user_id]
@@ -75,49 +93,54 @@ const user_id = req.user!.id; // ✅ ALWAYS from token
 
     const sessionString = sessionResult.rows[0]?.telegram_session;
 
-    if (!sessionString) {
-      return res.status(400).json({
-        success: false,
-        message: "Telegram not connected for this RA",
-      });
+    // ✅ 5. Prepare resolved values
+    let resolvedTelegramId = telegram_user_id || null;
+    let resolvedUsername = telegram_client_name || "";
+
+    // 👉 Normalize username if entered manually
+    if (resolvedUsername && !resolvedUsername.startsWith("@")) {
+      resolvedUsername = `@${resolvedUsername}`;
     }
 
-    const client = await createClient(sessionString);
+    // ✅ 6. STRICT Telegram check ONLY if session exists
+    if (sessionString) {
+      try {
+        const client = await createClient(sessionString);
 
-    // ✅ 3. Resolve Telegram user
-    let entity: any;
+        let entity: any;
 
-try {
-  if (telegram_user_id) {
-    entity = await client.getEntity(telegram_user_id);
-  } else if (telegram_client_name) {
-    entity = await client.getEntity(telegram_client_name);
-  } else if (phone_number) {
-    entity = await client.getEntity(phone_number);
-  }
-} catch (err) {
-  console.error("❌ Telegram lookup failed:", err);
+        if (telegram_user_id) {
+          entity = await client.getEntity(telegram_user_id);
+        } else if (telegram_client_name) {
+          entity = await client.getEntity(telegram_client_name);
+        } else if (phone_number) {
+          entity = await client.getEntity(phone_number);
+        }
 
-  return res.status(400).json({
-    success: false,
-    message: "User not found on Telegram",
-  });
-}
+        if (!entity || !entity.id) {
+          return res.status(400).json({
+            success: false,
+            message: "User not found on Telegram",
+          });
+        }
 
-// ✅ CRITICAL SAFETY CHECK
-if (!entity || !entity.id) {
-  console.error("❌ Entity is undefined:", entity);
+        // ✅ Always trust Telegram data if available
+        resolvedTelegramId = entity.id.toString();
 
-  return res.status(400).json({
-    success: false,
-    message: "Invalid Telegram user. Please check username/ID/phone.",
-  });
-}
+        if (entity.username) {
+          resolvedUsername = `@${entity.username}`;
+        }
 
-// ✅ SAFE NOW
-const resolvedTelegramId = entity.id.toString();
+      } catch (err) {
+        console.error("❌ Telegram lookup failed:", err);
+        return res.status(400).json({
+          success: false,
+          message: "User not found on Telegram",
+        });
+      }
+    }
 
-    // ✅ 4. Insert safely (NO overwrite across RAs)
+    // ✅ 7. SAME QUERY (unchanged)
     const query = `
       INSERT INTO telegram_users (
         telegram_user_id,
@@ -135,7 +158,7 @@ const resolvedTelegramId = entity.id.toString();
 
     const result = await pool.query(query, [
       resolvedTelegramId,
-      telegram_client_name || entity.username || "",
+      resolvedUsername, // ✅ FIXED HERE
       phone_number || "",
       user_id,
     ]);
@@ -143,7 +166,11 @@ const resolvedTelegramId = entity.id.toString();
     return res.json({
       success: true,
       data: result.rows[0],
+      message: sessionString
+        ? "Saved after Telegram verification"
+        : "Saved (Telegram not connected, skipped verification)",
     });
+
   } catch (error: any) {
     console.error("SAVE TELEGRAM USER ERROR:", error);
 

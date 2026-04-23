@@ -66,18 +66,12 @@ export const getAllRegistrationsActiveUsers = async (req: Request, res: Response
   rd.nism_certificate,
   rd.cancelled_cheque,
   rd.status AS ra_status,
-  rd.rejection_reason,
-
-  tu.telegram_user_id,
-  tu.telegram_client_name
+  rd.rejection_reason
 
 FROM users u
 
 LEFT JOIN ra_details rd 
   ON rd.user_id = u.id
-
-LEFT JOIN telegram_users tu 
-  ON tu.user_id = u.id
 
 WHERE u.role = 'RESEARCH_ANALYST'
 

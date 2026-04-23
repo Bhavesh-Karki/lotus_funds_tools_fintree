@@ -13,6 +13,7 @@ export const TelegramSearch = ({ raId, onSaved }: TelegramSearchProps) => {
   const [telegramId, setTelegramId] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [loading, setLoading] = useState(false);
+  const [phoneError, setPhoneError] = useState("");
 
   const handleSave = async () => {
     // ✅ RA validation
@@ -26,6 +27,11 @@ export const TelegramSearch = ({ raId, onSaved }: TelegramSearchProps) => {
       alert("Enter at least one: Username, Telegram ID, or Phone");
       return;
     }
+
+    if (phoneNumber && !phoneNumber.startsWith("+91")) {
+  alert("Phone number must start with +91");
+  return;
+}
 
     // ✅ Normalize username (remove @)
     const cleanUsername = username.trim().replace(/^@/, "");
@@ -102,12 +108,23 @@ export const TelegramSearch = ({ raId, onSaved }: TelegramSearchProps) => {
 
           {/* Phone */}
           <TextField
-            fullWidth
-            label="Phone Number"
-            placeholder="+1234567890"
-            value={phoneNumber}
-            onChange={(e) => setPhoneNumber(e.target.value)}
-          />
+  fullWidth
+  label="Phone Number"
+  placeholder="+919876543210"
+  value={phoneNumber}
+  error={!!phoneError}
+  helperText={phoneError}
+  onChange={(e) => {
+    const value = e.target.value;
+    setPhoneNumber(value);
+
+    if (value && !value.startsWith("+91")) {
+      setPhoneError("Phone number must start with +91");
+    } else {
+      setPhoneError("");
+    }
+  }}
+/>
 
           {/* Save Button */}
           <Box sx={{ gridColumn: "1 / -1", mt: 1 }}>
